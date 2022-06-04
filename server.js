@@ -39,6 +39,9 @@ app.use("/api", routes());
 
 app.use(express.static("uploads"));
 
-app.listen(5000, function () {
+const port = process.env.PORT || 8000
+
+
+app.listen(port, function () {
   console.log("estoy corriendo en puerto 5000");
 });
