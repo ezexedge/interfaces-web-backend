@@ -14,7 +14,8 @@ module.exports = function () {
   router.get("/user", user.user);
   router.put("/user/:id/edit", user.userUpdate);
   router.post("/crear-local", locales.crear);
-  router.get("/locales", locales.filtro),
+  router.get("/locales-categoria", locales.filtro),
+  router.get("/locales", locales.getLocales),
     router.get("/locales/:id", locales.getById);
   router.post("/reset-password/:email", auth.resetPassword);
   router.delete("/eliminar-local/:localesID", locales.eliminarLocal);

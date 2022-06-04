@@ -115,6 +115,27 @@ exports.crearComentario = async (req, res) => {
   }
 };
 
+
+exports.getLocales = async (req, res) => {
+  try {
+    const db = admin.firestore();
+    let consulta = await db.collection("locales").get();
+    let docs = [];
+    consulta.forEach((doc) => {
+      console.log("acaaa", doc.id);
+      docs.push({ ...doc.data(), id: doc.id });
+    });
+
+    let data = utils.random(docs);
+
+    res.status(200).json({ data: data });
+  } catch (error) {
+    res.status(400).json({
+      error: error.message,
+    });
+  }
+}
+
 //filtro por viejo , nuevo , y random
 exports.filtro = async (req, res) => {
   try {
