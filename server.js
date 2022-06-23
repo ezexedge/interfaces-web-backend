@@ -30,7 +30,7 @@ app.use(function (req, res, next) {
     next();
   });
   
-  app.use(cors({credentials: true, origin: process.env.REACT_APP_URL}));
+  app.use(cors({credentials: true}));
 
 app.use(bodyParser())
 
