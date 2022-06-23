@@ -69,6 +69,8 @@ exports.login = async(req,res) => {
 
   console.log('encontrado',usuario)
 
+  usuario.token = token
+
   res.status(200).json({'message': usuario})
 
   }catch(err){
