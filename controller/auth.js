@@ -54,7 +54,7 @@ exports.login = async(req,res) => {
    let token = jwt.sign({uid:result.user.uid,email: result.user.email},'123456')
 
   
-   res.cookie('jwt',token,{expire: new Date() + 9999 ,secure: req.secure || req.headers['x-forwarded-proto'] === 'https'})
+   res.cookie('jwt',token,{expire: new Date() + 9999,   sameSite:"none", httpOnly:true,secure:true })
 
 
   const db = admin.firestore();
