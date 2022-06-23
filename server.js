@@ -30,7 +30,7 @@ app.use(function (req, res, next) {
     next();
   });
   
-  app.use(cors({credentials: true}));
+  app.use(cors({credentials: true, origin: 'https://front-interfazz.herokuapp.com'}));
 
 app.use(bodyParser())
 
