@@ -1,47 +1,46 @@
-const express = require("express");
-const bodyParser = require("body-parser");
-const routes = require("./routes");
-const cookieParser = require("cookie-parser");
-const admin = require("firebase-admin");
-const ngrok = require("ngrok");
-const multer = require("multer");
-const dotenv = require("dotenv");
-const app = express();
+const express = require('express')
+const bodyParser = require('body-parser')
+const routes = require('./routes')
+const cors = require('cors');
+const cookieParser = require('cookie-parser')
+const admin = require('firebase-admin')
+require('dotenv').config();
 
-dotenv.config();
+const app = express()
+
+
 const serviceAccount = require("./serviceAccountKey.json");
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-  storageBucket: "https://SECRET.firebaseio.com",
+    credential: admin.credential.cert(serviceAccount),
 });
 
-app.use(cookieParser());
 
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
-app.use(bodyParser());
 
 app.use(function (req, res, next) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader(
-    "Access-Control-Allow-Methods",
-    "GET, POST, OPTIONS, PUT, PATCH, DELETE"
-  );
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "X-Requested-With,content-type"
-  );
-  res.setHeader("Access-Control-Allow-Credentials", true);
-  next();
-});
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader(
+      "Access-Control-Allow-Methods",
+      "GET, POST, OPTIONS, PUT, PATCH, DELETE"
+    );
+    res.setHeader(
+      "Access-Control-Allow-Headers",
+      "X-Requested-With,content-type"
+    );
+    res.setHeader("Access-Control-Allow-Credentials", true);
+    next();
+  });
+  
+  app.use(cors({credentials: true, origin: process.env.REACT_APP_URL}));
 
-app.use("/api", routes());
+app.use(bodyParser())
 
-app.use(express.static("uploads"));
+app.use(cookieParser())
 
-const port = process.env.PORT || 8000
+app.use('/api',routes())
 
 
-app.listen(port, function () {
-  console.log("estoy corriendo en puerto 5000");
-});
+
+
+app.listen(process.env.PORT,function(){
+    console.log(`estoy corriendo en puerto ${process.env.PORT}`)
+})

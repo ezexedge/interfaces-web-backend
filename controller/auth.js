@@ -1,11 +1,16 @@
-const admin = require("firebase-admin");
-const firebase = require("../firebase");
-const jwt = require("jsonwebtoken");
-const multer = require("multer");
-global.XMLHttpRequest = require("xhr2");
+const admin = require('firebase-admin')
+const firebase = require('../firebase')
+const jwt = require('jsonwebtoken')
+const expressJwt = require('express-jwt')
+const {getError} = require('../utils/firebase-error')
+
+
+
 
 exports.registrar = async (req, res) => {
   try {
+    
+    
     const { email, nombre, apellido, password } = req.body;
 
     const db = admin.firestore();
@@ -25,61 +30,90 @@ exports.registrar = async (req, res) => {
 
     await db.collection("users").add(obj);
 
+    
+
 
     res.status(200).json({ message: "creado correctamente" });
   } catch (err) {
-    console.log("error", err);
-    res.status(400).json({ error: "no se pudo crear el usuario" });
+
+    res.status(400).json({ error: getError(err.errorInfo.code) });
   }
 };
 
-exports.login = async (req, res) => {
-  try {
-    const { email, password } = req.body;
 
-    let result = await firebase.auth().signInWithEmailAndPassword(email, password);
+exports.login = async(req,res) => {
 
-    let token = await jwt.sign(
-      { uid: result.user.uid, email: result.user.email },
-      "123456",
-      { expiresIn: "7d" }
-    );
 
-    res.cookie("jwt", token, { expire: new Date() + 9999 });
+  try{
 
-    res.status(200).json({ message: token });
-  } catch (err) {
-    console.log("error", err);
-    res.status(400).json({ error: "no se pudo logear" });
+
+  const {email,password} = req.body
+
+   let result = await firebase.auth().signInWithEmailAndPassword(email,password)
+
+   let token = jwt.sign({uid:result.user.uid,email: result.user.email},'123456')
+
+  
+   res.cookie('jwt',token,{expire: new Date() + 9999 })
+
+
+  const db = admin.firestore();
+  let consulta = await db.collection("users").get();
+  let docs = [];
+  consulta.forEach((doc) => {
+    docs.push({ ...doc.data() });
+  });
+
+
+  let usuario = docs.find((val) => val.uid === result.user.uid);
+
+  console.log('encontrado',usuario)
+
+  res.status(200).json({'message': usuario})
+
+  }catch(err){
+      console.log('error',err)
+      res.status(400).json({'error': 'no se pudo loguear'})
   }
-};
 
-exports.logout = (req, res) => {
-  try {
-    res.clearCookie("jwt");
 
-    res.status(200).json({
-      message: "success",
-    });
-  } catch (err) {
-    res.status(400).json({
-      error: "error en logout",
-    });
-  }
-};
+
+}
+
+
+exports.logout = (req,res) => {
+        try{
+
+            res.clearCookie('jwt')
+
+            res.status(200).json({
+                'message' : 'success'
+            })
+
+
+        }catch(err){
+
+            res.status(400).json({
+                'error': 'error en logout'
+            })
+
+        }
+}
 
 exports.resetPassword = async (req, res) => {
-  try {
-    const { email } = req.params;
+    try {
+      const { email } = req.params;
+  
+      await firebase.auth().sendPasswordResetEmail(email);
+  
+      res.status(200).json({
+        message: "revise su bandeja de entrada",
+      });
+    } catch (err) {
 
-    await firebase.auth().sendPasswordResetEmail(email);
-
-    res.status(200).json({
-      message: "revise su bandeja de entrada",
-    });
-  } catch (error) {
-    res.status(400).json({
-      error: error.message,
-    });
-  }
-};
+      console.log('aca el error',err)
+      res.status(400).json({
+        error: getError(err.code)
+      });
+    }
+  };
