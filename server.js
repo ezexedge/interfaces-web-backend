@@ -4,9 +4,10 @@ const routes = require('./routes')
 const cors = require('cors');
 const cookieParser = require('cookie-parser')
 const admin = require('firebase-admin')
+
 require('dotenv').config();
 
-const app = express()
+ const app = express()
 
 
 const serviceAccount = require("./serviceAccountKey.json");
@@ -30,7 +31,7 @@ app.use(function (req, res, next) {
     next();
   });
   
-  app.use(cors({credentials: true, origin: 'https://front-interfazz.herokuapp.com'}));
+  app.use(cors({credentials: true, origin: process.env.REACT_APP_URL}));
 
 app.use(bodyParser())
 
@@ -44,3 +45,5 @@ app.use('/api',routes())
 app.listen(process.env.PORT,function(){
     console.log(`estoy corriendo en puerto ${process.env.PORT}`)
 })
+
+module.exports = app

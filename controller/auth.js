@@ -35,8 +35,10 @@ exports.registrar = async (req, res) => {
 
     res.status(200).json({ message: "creado correctamente" });
   } catch (err) {
+//console.log('no se puedo registrar', getError(err.errorInfo.code))
 
-    res.status(400).json({ error: getError(err.errorInfo.code) });
+
+res.status(400).json({ 'error': getError(err.errorInfo.code) });
   }
 };
 
@@ -54,7 +56,7 @@ exports.login = async(req,res) => {
    let token = jwt.sign({uid:result.user.uid,email: result.user.email},'123456')
 
   
-   res.cookie('jwt',token,{expire: new Date() + 9999,httpOnly: false })
+   res.cookie('jwt',token,{expire: new Date() + 9999 })
 
 
   const db = admin.firestore();
@@ -67,15 +69,15 @@ exports.login = async(req,res) => {
 
   let usuario = docs.find((val) => val.uid === result.user.uid);
 
-  console.log('encontrado',usuario)
-
+  //console.log('encontrado',usuario)
   usuario.token = token
 
   res.status(200).json({'message': usuario})
 
   }catch(err){
-      console.log('error',err)
-      res.status(400).json({'error': 'no se pudo loguear'})
+    //  console.log('error',getError(err.code))
+
+      res.status(400).json({'error': getError(err.code)})
   }
 
 
@@ -113,7 +115,7 @@ exports.resetPassword = async (req, res) => {
       });
     } catch (err) {
 
-      console.log('aca el error',err)
+      //console.log('aca el error',err)
       res.status(400).json({
         error: getError(err.code)
       });

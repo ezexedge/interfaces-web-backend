@@ -1,69 +1,89 @@
-const admin = require("firebase-admin");
 const firebase = require("../firebase");
 const jwt = require("jsonwebtoken");
 const shortid = require("shortid");
 const moment = require("moment");
 const utils = require("../utils/suffle");
+const admin = require('firebase-admin')
+
+const db = admin.firestore
 
 exports.crear = async(req, res) => {
-    try {
-        const {
-            nombre,
-            calle,
-            altura,
-            latitud,
-            longitud,
-            horaApertura,
-            horaCierre,
-            imagen,
-            categoria,
-            usuario,
-            descripcion
-        } = req.body;
+  try {
+      const {
+          nombre,
+          calle,
+          altura,
+          latitud,
+          longitud,
+          horaApertura,
+          horaCierre,
+          imagen,
+          categoria,
+          usuario,
+          descripcion,
+          pais,
+          provincia,
+          localidad
+      } = req.body;
 
-        const db = admin.firestore();
 
-        let obj = {
-            nombre: nombre,
-            calle: calle,
-            altura: altura,
-            latitud: latitud,
-            longitud: longitud,
-            horaApertura: horaApertura,
-            horaCierre: horaCierre,
-            imagen: imagen,
-            likes: [],
-            dislikes: [],
-            comentarios: [],
-            categoria: categoria,
-            createdAt: moment().format("YYYY-MM-DD"),
-            usuario:usuario,
-            descripcion: descripcion
-        };
+      let consulta = await db().collection("categorias").get();
+      let docsCategorias = [];
+      consulta.forEach((doc) => {
+         // console.log("acaaa", doc.id);
+          docsCategorias.push({...doc.data(), id: doc.id });
+      });
 
-        await db.collection("locales").add(obj);
+      let categoriaEncontrada = docsCategorias.find((val) => val.id === categoria);
+   
 
-        res.status(200).json({ message: "locales creado correctamente" });
-    } catch (error) {
-        res.status(400).json({
-            error: error.message,
-        });
-    }
+      let obj = {
+          nombre: nombre,
+          calle: calle,
+          altura: altura,
+          latitud: latitud,
+          longitud: longitud,
+          horaApertura: horaApertura,
+          horaCierre: horaCierre,
+          imagen: imagen,
+          pais: pais ? pais : '',
+          provincia: provincia?provincia:'',
+          localidad: localidad?localidad:'',
+          likes: [],
+          dislikes: [],
+          comentarios: [],
+          categoria: categoria,
+          createdAt: new Date(),
+          usuario:usuario,
+          descripcion: descripcion,
+          nombreCategoria: categoriaEncontrada.nombre
+      };
+
+    let result =  await db().collection("locales").add(obj);
+      //console.log('acaaa creo local',result)
+      res.status(200).json({ message: result });
+  } catch (error) {
+      res.status(400).json({
+          error: error.message,
+      });
+  }
 };
-
 exports.getLocales = async(req, res) => {
     try {
-        const db = admin.firestore();
-        let consulta = await db.collection("locales").get();
+      
+        let consulta = await db().collection("locales").get();
         let docs = [];
         consulta.forEach((doc) => {
-            console.log("acaaa", doc.id);
+           // console.log("acaaa", doc.id);
             docs.push({...doc.data(), id: doc.id });
         });
 
-        let data = utils.random(docs);
 
-        res.status(200).json({ data: data });
+        let sortedDates = docs.sort(function(a, b){
+          return moment(b.createdAt).format()-moment(a.createdAt).format()
+        });
+
+        res.status(200).json({ data: sortedDates });
     } catch (error) {
         res.status(400).json({
             error: error.message,
@@ -73,11 +93,10 @@ exports.getLocales = async(req, res) => {
 
 exports.getCategorias = async(req,res) => {
     try{
-        const db = admin.firestore();
-        let consulta = await db.collection("categorias").get();
+        let consulta = await db().collection("categorias").get();
         let docs = [];
         consulta.forEach((doc) => {
-            console.log("acaaa", doc.id);
+           // console.log("acaaa", doc.id);
             docs.push({...doc.data(), id: doc.id });
         });
 
@@ -96,11 +115,10 @@ exports.getById = async(req, res) => {
     try {
         const { id } = req.params;
 
-        const db = admin.firestore();
-        let consulta = await db.collection("locales").get();
+        let consulta = await db().collection("locales").get();
         let docs = [];
         consulta.forEach((doc) => {
-            console.log("acaaa", doc.id);
+           // console.log("acaaa", doc.id);
             docs.push({...doc.data(), id: doc.id });
         });
 
@@ -122,17 +140,31 @@ exports.getByUser = async(req, res) => {
     try {
         const { user } = req.params;
 
-        const db = admin.firestore();
-        let consulta = await db.collection("locales").get();
+
+
+        let consultaUsers = await db().collection("users").get();
+        let docsUsers = [];
+        consultaUsers.forEach((doc) => {
+            docsUsers.push({...doc.data(), id: doc.id });
+        });
+
+        let usuarioEncontrado = docsUsers.find(val => val.uid === user )
+
+        
+
+        if(!usuarioEncontrado)throw new Error('El usuario no existe')
+
+        let consulta = await db().collection("locales").get();
         let docs = [];
         consulta.forEach((doc) => {
-            console.log("acaaa", doc.id);
+            //console.log("acaaa", doc.id);
             docs.push({...doc.data(), id: doc.id });
         });
 
         let localesUser = docs.filter((val) => val.usuario === user);
 
-
+        
+     
         res.status(200).json({
             message: localesUser
         });
@@ -147,15 +179,18 @@ exports.eliminarLocal = async(req, res) => {
     try {
         const { id } = req.params;
 
-        const db = admin.firestore();
-        let consulta = await db.collection("locales").get();
+        let consulta = await db().collection("locales").get();
         let docs = [];
         consulta.forEach((doc) => {
-            console.log("acaaa", doc.id);
+            //console.log("acaaa", doc.id);
             docs.push({...doc.data(), id: doc.id });
         });
 
-        await db.collection("locales").doc(id).delete();
+        let localEncontrado = docs.find(val => val.id === id )
+
+        if(!localEncontrado)throw new Error(`El id: ${id} no existe`)
+
+        await db().collection("locales").doc(id).delete();
 
         res.status(200).json({ message: "Eliminado correctamente" });
     } catch (error) {
@@ -171,11 +206,10 @@ exports.likesLocales = async (req, res) => {
   
       let idUsuario = userId
   
-      const db = admin.firestore();
-      let consulta = await db.collection("locales").get();
+      let consulta = await db().collection("locales").get();
       let docs = [];
       consulta.forEach((doc) => {
-        console.log("acaaa", doc.id);
+        //console.log("acaaa", doc.id);
         docs.push({ ...doc.data(), id: doc.id });
       });
   
@@ -204,7 +238,7 @@ exports.likesLocales = async (req, res) => {
         encontrado.likes = likesActualizado;
       }
   
-      await db
+      await db()
         .collection("locales")
         .doc(encontrado.id)
         .update({
@@ -225,11 +259,10 @@ exports.likesLocales = async (req, res) => {
   
       let idUsuario = userId
   
-      const db = admin.firestore();
-      let consulta = await db.collection("locales").get();
+      let consulta = await db().collection("locales").get();
       let docs = [];
       consulta.forEach((doc) => {
-        console.log("acaaa", doc.id);
+        //console.log("acaaa", doc.id);
         docs.push({ ...doc.data(), id: doc.id });
       });
   
@@ -258,7 +291,7 @@ exports.likesLocales = async (req, res) => {
         encontrado.dislikes = likesActualizado;
       }
   
-      await db
+      await db()
         .collection("locales")
         .doc(encontrado.id)
         .update({
@@ -272,3 +305,106 @@ exports.likesLocales = async (req, res) => {
       });
     }
   };
+
+  exports.getPopulares = async(req, res) => {
+    try {
+        let consulta = await db().collection("locales").get();
+        let docs = [];
+        consulta.forEach((doc) => {
+            //console.log("acaaa", doc.id);
+            docs.push({...doc.data(), id: doc.id });
+        });
+
+        docs = docs.filter(val => val.likes.length > 0) 
+
+        let ordenado = docs.sort(function(a, b) {
+          return b.likes.length - a.likes.length
+        });
+        res.status(200).json({ data: ordenado });
+    } catch (error) {
+        res.status(400).json({
+            error: error.message,
+        });
+    }
+}
+
+
+
+exports.editar = async(req, res) => {
+  try {
+      const {
+          nombre,
+          calle,
+          altura,
+          latitud,
+          longitud,
+          horaApertura,
+          horaCierre,
+          imagen,
+          categoria,
+          usuario,
+          descripcion,
+          likes,
+          dislikes,
+          createdAt
+      } = req.body;
+
+      const {id} = req.params
+
+      //console.log('acaa esta el id',id)
+
+      let consulta2 = await db().collection("categorias").get();
+      let docsCategorias = [];
+      consulta2.forEach((doc) => {
+         // console.log("acaaa", doc.id);
+          docsCategorias.push({...doc.data(), id: doc.id });
+      });
+
+      let categoriaEncontrada = docsCategorias.find((val) => val.id === categoria);
+   
+
+
+      
+
+      let obj = {
+          nombre: nombre,
+          calle: calle,
+          altura: altura,
+          latitud: latitud,
+          longitud: longitud,
+          horaApertura: horaApertura,
+          horaCierre: horaCierre,
+          imagen: imagen,
+          likes: [],
+          dislikes: [],
+          comentarios: [],
+          categoria: categoria,
+          createdAt: moment().format("YYYY-MM-DD"),
+          usuario:usuario,
+          descripcion: descripcion,
+          nombreCategoria: categoriaEncontrada.nombre
+
+      };
+
+              let consulta = await db().collection("locales").get();
+        let docs = [];
+        consulta.forEach((doc) => {
+            //console.log("acaaa", doc.id);
+            docs.push({...doc.data(), id: doc.id });
+        });
+
+        let encontrado = docs.find((val) => val.id === id);
+
+        if (!encontrado) throw new Error(`El local con el id: ${id} no existe`);
+
+
+    let result =  await db().collection("locales").doc(id).update(obj)
+      //console.log('acaaa edito local',result)
+      res.status(200).json({ message: result });
+      
+  } catch (error) {
+      res.status(400).json({
+          error: error.message,
+      });
+  }
+};

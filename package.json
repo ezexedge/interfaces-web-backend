@@ -5,7 +5,9 @@
   "main": "server.js",
   "scripts": {
     "dev": "nodemon server.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "jest",
+    "coverage": "jest --coverage"
   },
   "author": "",
   "license": "ISC",
@@ -18,9 +20,17 @@
     "express-jwt": "^7.7.2",
     "firebase": "^7.24.0",
     "firebase-admin": "^9.8.0",
+    "firestore-jest-mock": "^0.18.0",
+    "firestore-mock": "^1.0.4",
+    "jest-progress-bar-reporter": "^1.0.24",
     "jsonwebtoken": "^8.5.1",
     "moment": "^2.29.3",
     "nodemon": "^2.0.16",
+    "random-email": "^1.0.3",
     "shortid": "^2.2.16"
+  },
+  "devDependencies": {
+    "jest": "^28.1.1",
+    "supertest": "^6.2.3"
   }
 }
